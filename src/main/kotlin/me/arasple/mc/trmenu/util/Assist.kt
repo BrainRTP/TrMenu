@@ -1,11 +1,11 @@
 package me.arasple.mc.trmenu.util
 
 import io.izzel.taboolib.internal.apache.lang3.math.NumberUtils
+import io.izzel.taboolib.kotlin.Randoms
 import io.izzel.taboolib.module.db.local.LocalPlayer
 import io.izzel.taboolib.module.tellraw.TellrawJson
 import io.izzel.taboolib.util.item.ItemBuilder
 import io.izzel.taboolib.util.item.Items
-import io.izzel.taboolib.util.lite.Numbers
 import me.arasple.mc.trmenu.api.Extends.getArguments
 import me.arasple.mc.trmenu.api.Extends.getMeta
 import me.arasple.mc.trmenu.api.action.Actions
@@ -20,6 +20,7 @@ import org.bukkit.OfflinePlayer
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 
 
 /**
@@ -54,7 +55,8 @@ class Assist {
     }
 
     fun isPlayerWhitelisted(player: String): Boolean {
-        return getOfflinePlayer(player)?.isWhitelisted ?: Bukkit.getWhitelistedPlayers().any { it.name.equals(player, true) }
+        return getOfflinePlayer(player)?.isWhitelisted ?: Bukkit.getWhitelistedPlayers()
+            .any { it.name.equals(player, true) }
     }
 
     fun addWhitelist(player: String): Boolean {
@@ -82,6 +84,23 @@ class Assist {
 
     fun getRandomPlayer(): Player? {
         return Bukkit.getOnlinePlayers().randomOrNull()
+    }
+
+    fun getPlayerInventory(player: String): PlayerInventory? {
+        return getPlayer(player)?.inventory
+    }
+
+    fun getArmorContents(player: String): Array<ItemStack>? {
+        return getPlayerInventory(player)?.armorContents
+    }
+
+    fun getItemInHand(player: String) = getItemInHand(player, false)
+
+    fun getItemInHand(player: String, offhand: Boolean): ItemStack? {
+        return getPlayerInventory(player)?.let {
+            if (offhand) it.itemInOffHand
+            else it.itemInMainHand
+        }
     }
 
     /**
@@ -212,7 +231,7 @@ class Assist {
      * Numbers
      */
     fun chance(number: String): Boolean {
-        return Numbers.random(NumberUtils.toDouble(number, 0.0))
+        return Randoms.random(NumberUtils.toDouble(number, 0.0))
     }
 
     fun randomInteger(low: Int, high: Int): Int {
@@ -220,7 +239,7 @@ class Assist {
     }
 
     fun randomDouble(low: Double, high: Double): Double {
-        return Numbers.getRandomDouble(low, high)
+        return Randoms.random(low, high)
     }
 
     fun isNumber(number: String): Boolean {

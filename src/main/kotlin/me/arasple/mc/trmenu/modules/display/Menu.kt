@@ -13,7 +13,7 @@ import me.arasple.mc.trmenu.modules.conf.menu.MenuConfiguration
 import me.arasple.mc.trmenu.modules.data.Sessions
 import me.arasple.mc.trmenu.modules.display.menu.MenuLayout
 import me.arasple.mc.trmenu.modules.display.menu.MenuSettings
-import me.arasple.mc.trmenu.modules.service.mirror.Mirror
+import me.arasple.mc.trmenu.modules.service.Mirror
 import me.arasple.mc.trmenu.util.Msger
 import me.arasple.mc.trmenu.util.Tasks
 import me.arasple.mc.trmenu.util.Tasks.Tasking
@@ -27,9 +27,23 @@ import kotlin.system.measureTimeMillis
  * @author Arasple
  * @date 2020/5/30 13:24
  */
-class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettings, val layout: MenuLayout, val icons: Set<Icon>, val viewers: MutableSet<Player>, val tasking: Tasking) {
+class Menu(
+    val id: String,
+    val conf: MenuConfiguration,
+    val settings: MenuSettings,
+    val layout: MenuLayout,
+    val icons: Set<Icon>,
+    val viewers: MutableSet<Player>,
+    val tasking: Tasking
+) {
 
-    constructor(id: String, conf: MenuConfiguration, settings: MenuSettings, layout: MenuLayout, icons: Set<Icon>) : this(id, conf, settings, layout, icons, mutableSetOf(), Tasking())
+    constructor(
+        id: String,
+        conf: MenuConfiguration,
+        settings: MenuSettings,
+        layout: MenuLayout,
+        icons: Set<Icon>
+    ) : this(id, conf, settings, layout, icons, mutableSetOf(), Tasking())
 
     init {
         layout.locateIcons(icons)
@@ -41,7 +55,10 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
     fun switch(player: Player, page: Int) {
         resetTaskings(player)
         Mirror.async("Menu:onSwitch(async)") {
-            val p = (if (page < 0) settings.options.getDefaultLayout(player) else min(page, layout.layouts.size - 1)).coerceAtLeast(0)
+            val p = (if (page < 0) settings.options.getDefaultLayout(player) else min(
+                page,
+                layout.layouts.size - 1
+            )).coerceAtLeast(0)
             val s = player.getMenuSession()
             val e = MenuSwitchPageEvent(player, this, s.page, p).async(true).call() as MenuSwitchPageEvent
 
@@ -49,11 +66,9 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
                 val fromLayout = s.layout ?: return@async
                 val layout = layout.layouts[p].also { s.set(this, it, p) }
 
-
                 Tasks.task(true) {
                     val delay = measureTimeMillis { e.menu.refreshIcons(player, p) } / 50
                     Tasks.delay(delay, true) {
-
                         if (fromLayout.isSimilar(layout)) {
                             NMS.sendClearNonIconSlots(player, s)
                         } else {
@@ -64,6 +79,9 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
                             it.displayItemStack(player)
                             it.startUpdateTasks(player, this)
                         }
+
+                        settings.title.load(player, this, layout)
+                        settings.tasks.run(player, this)
                     }
                 }
             }
@@ -77,8 +95,12 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
     fun open(player: Player, page: Int, reason: MenuOpenEvent.Reason) {
         resetTaskings(player)
         Mirror.async("Menu:onOpen(async)") {
-            val p = (if (page < 0) settings.options.getDefaultLayout(player) else min(page, layout.layouts.size - 1)).coerceAtLeast(0)
-            val e = MenuOpenEvent(player, this, p, reason, MenuOpenEvent.Result.UNKNOWN).async(true).call() as MenuOpenEvent
+            val p = (if (page < 0) settings.options.getDefaultLayout(player) else min(
+                page,
+                layout.layouts.size - 1
+            )).coerceAtLeast(0)
+            val e =
+                MenuOpenEvent(player, this, p, reason, MenuOpenEvent.Result.UNKNOWN).async(true).call() as MenuOpenEvent
             val s = player.getMenuSession()
 
             if (!e.isCancelled) {
@@ -106,7 +128,6 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
             tasking.reset(it)
             MenuCloseEvent(it, this@Menu, -1, MenuCloseEvent.Reason.CONSOLE, true).call()
             if (closeInventory) it.closeInventory()
-
             true
         }
     }
@@ -117,11 +138,11 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
 
     fun close(player: Player, page: Int, reason: MenuCloseEvent.Reason, closeInventory: Boolean, silent: Boolean) {
         tasking.reset(player)
+        player.setMenuSession(null, null, -1)
 
         Tasks.task {
             MenuCloseEvent(player, this@Menu, page, reason, silent).call()
             layout.layouts[page].close(player, closeInventory)
-            player.setMenuSession(null, null, -1)
             if (closeInventory) player.closeInventory() else player.updateInventory()
         }
 
@@ -137,14 +158,15 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
         icons.filter { it.isInPage(page) && it.subIcons.isNotEmpty() }.forEach { it.refreshIcon(player) }
     }
 
-    fun resetIcons(player: Player, session: Session) {
-        icons.forEach { it.setItemStack(player, session, true) }
+    fun refreshIconItems(player: Player, session: Session) {
+        icons.forEach { it.setItemStackSync(player, session, true) }
     }
 
     fun getOccupiedSlots(player: Player, page: Int): Set<Int> {
         return mutableSetOf<Int>().let { slots ->
             icons.forEach {
-                val find = it.getIconProperty(player).display.position[page]?.currentElement(player)?.getOccupiedSlots(player)
+                val find =
+                    it.getIconProperty(player).display.position[page]?.currentElement(player)?.getOccupiedSlots(player)
                 if (find != null) {
                     slots.addAll(find)
                 }
@@ -162,7 +184,8 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
 
     fun getIcon(player: Player, page: Int, slot: Int): Icon? {
         return getIcons(player, page).firstOrNull {
-            it.getIconProperty(player).display.position[page]?.currentElement(player)?.getOccupiedSlots(player)?.contains(slot) ?: false
+            it.getIconProperty(player).display.position[page]?.currentElement(player)?.getOccupiedSlots(player)
+                ?.contains(slot) ?: false
         }
     }
 
@@ -195,9 +218,9 @@ class Menu(val id: String, val conf: MenuConfiguration, val settings: MenuSettin
         }
     }
 
-    class Session(var menu: Menu?, var layout: MenuLayout.Layout?, var page: Int, var fromLayout: MenuLayout.Layout?, var id: Int = 0) {
+    class Session(var menu: Menu?, var layout: MenuLayout.Layout?, var page: Int, var id: Int = 0) {
 
-        constructor() : this(null, null, 0, null)
+        constructor() : this(null, null, 0)
 
         fun isNull(): Boolean {
             return menu == null || layout == null

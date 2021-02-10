@@ -1,12 +1,12 @@
 package me.arasple.mc.trmenu.api.action.base
 
 import io.izzel.taboolib.internal.apache.lang3.math.NumberUtils
-import io.izzel.taboolib.util.lite.Numbers
+import io.izzel.taboolib.kotlin.Randoms
 import me.arasple.mc.trmenu.api.Extends.getMenuSession
 import me.arasple.mc.trmenu.modules.conf.property.Nodes
 import me.arasple.mc.trmenu.modules.function.script.Scripts
 import me.arasple.mc.trmenu.modules.service.metrics.MetricsHandler
-import me.arasple.mc.trmenu.modules.service.mirror.Mirror
+import me.arasple.mc.trmenu.modules.service.Mirror
 import me.arasple.mc.trmenu.util.Msger
 import me.arasple.mc.trmenu.util.Tasks
 import org.bukkit.Bukkit
@@ -49,7 +49,7 @@ abstract class Action(val name: Regex, internal var content: String, var options
 
     fun evalDelay(player: Player) = NumberUtils.toLong(Msger.replace(player, options[Nodes.DELAY]), 0L)
 
-    fun evalChance(player: Player) = options[Nodes.CHANCE]?.let { Numbers.random(NumberUtils.toDouble(Msger.replace(player, it), 1.0)) } ?: true
+    fun evalChance(player: Player) = options[Nodes.CHANCE]?.let { Randoms.random(NumberUtils.toDouble(Msger.replace(player, it), 1.0)) } ?: true
 
     fun evalCondition(player: Player) = options[Nodes.REQUIREMENT]?.let { Scripts.expression(player, it).asBoolean() } ?: true
 

@@ -41,7 +41,7 @@ data class Mat(val raw: String, val value: String, val type: Pair<Nodes, String>
         val typeValue = if (dynamic) Msger.replace(player, type.second) else type.second
 
         return when (type.first) {
-            Nodes.MAT_REPOSITORY -> ItemRepository.getItem(typeValue) ?: ItemStack(Material.BARRIER)
+            Nodes.MAT_REPOSITORY -> ItemRepository.getItem(typeValue) ?: Item.EMPTY_ITEM
             Nodes.MAT_HEAD -> Skulls.getPlayerHead(typeValue)
             Nodes.MAT_TEXTURED_SKULL -> Skulls.getTextureSkull(typeValue)
             Nodes.MAT_HEAD_DATABASE -> HookInstance.getHeadDatabase().getHead(typeValue)
@@ -51,7 +51,7 @@ data class Mat(val raw: String, val value: String, val type: Pair<Nodes, String>
                 if (texture == null) Skulls.getPlayerHead(typeValue)
                 else Skulls.getTextureSkull(texture)
             }
-            Nodes.MAT_SCRIPT -> Scripts.script(player, type.second, true).asItemStack()!!
+            Nodes.MAT_SCRIPT -> Scripts.script(player, type.second, true).asItemStack() ?: Item.EMPTY_ITEM
             Nodes.MAT_JSON -> Item.fromJson(typeValue)
             else -> {
                 if (staticItem != null) {
@@ -126,8 +126,10 @@ data class Mat(val raw: String, val value: String, val type: Pair<Nodes, String>
             @Suppress("DEPRECATION")
             if (meta is SkullMeta) {
                 if (HookInstance.getHeadDatabase().isHooked()) {
-                    val id = HookInstance.getHeadDatabase().getId(item)
-                    if (!Strings.isBlank(id)) return "<hdb:$id>"
+                    try {
+                        val id = HookInstance.getHeadDatabase().getId(item)
+                        if (!Strings.isBlank(id)) return "<hdb:$id>"
+                    } catch (ignored: NullPointerException) { }
                 }
                 val owner = meta.owner
                 return if (owner != null) "<head:${owner}>"
